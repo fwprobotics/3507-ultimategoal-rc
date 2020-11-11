@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.subsystems.Arm;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
@@ -13,6 +14,7 @@ public class MecanumDrive extends LinearOpMode {
     Drivetrain drivetrain;
     Intake intake;
     Shooter shooter;
+    Arm arm;
 
     @Override
     public void runOpMode() {
@@ -20,6 +22,7 @@ public class MecanumDrive extends LinearOpMode {
         drivetrain = new Drivetrain(this, hardwareMap, telemetry);
         intake = new Intake(this, hardwareMap, telemetry);
         shooter = new Shooter(this, hardwareMap, telemetry);
+        arm = new Arm(this, hardwareMap, telemetry);
 
         // Ensuring correct subsystem statuses
 
@@ -41,9 +44,10 @@ public class MecanumDrive extends LinearOpMode {
                 intake.directionControl(gamepad1.a);
                 intake.runIntake();
 
-                shooter.toggleShooter(gamepad2.x);
-                shooter.runShooter();
+//                shooter.toggleShooter(gamepad2.x);
+//                shooter.runShooter();
 
+                arm.teleOpControl(gamepad2.right_stick_y);
 
                 telemetry.update();
 
