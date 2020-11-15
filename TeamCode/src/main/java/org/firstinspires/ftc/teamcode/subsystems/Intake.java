@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.qualcomm.hardware.motors.RevRoboticsCoreHexMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
@@ -33,14 +31,10 @@ public class Intake {
     private intakeStatuses intakeStatus = intakeStatuses.OFF;
     public intakeDirections intakeDirection = intakeDirections.FORWARD;
     private boolean inputButtonPressed;
-    private int direction = 1;
-
-    private static final MotorConfigurationType MOTOR_CONFIG =
-            MotorConfigurationType.getMotorType(RevRoboticsCoreHexMotor.class);
-
+    private int direction = -1;
 
     public static class IntakeConstants {
-        public static double intake_power = -1.0;
+        public static double intake_power = 1.0;
 
     }
 

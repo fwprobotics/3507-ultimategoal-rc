@@ -21,9 +21,9 @@ public class Drivetrain {
 
     @Config
     public static class TeleOpDTConstants {
-        public static double turning_modifier = 1;
-        public static double y_modifier = 1;
-        public static double x_modifier = 1;
+        public static double turning_modifier = 0.7;
+        public static double y_modifier = 0.7;
+        public static double x_modifier = 0.6;
 
     }
 
@@ -40,6 +40,7 @@ public class Drivetrain {
         frontRightDrive = hardwareMap.dcMotor.get("frontRightDrive");
 
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
 
         l.idle();
     }
