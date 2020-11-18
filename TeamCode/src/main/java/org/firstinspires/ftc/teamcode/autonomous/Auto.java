@@ -6,8 +6,10 @@ import com.acmerobotics.dashboard.config.Config;
 import org.firstinspires.ftc.teamcode.subsystems.Arm;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.subsystems.ArmGripper;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -32,15 +34,18 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 
-@Autonomous(name = "Auto", group = "autonomous")
-public class AutoBase extends LinearOpMode
+@Config
+@Autonomous(name = "Blue Auto", group = "autonomous")
+public class Auto extends LinearOpMode
 {
 
     // CV Stuff
-    public static int four_rings = 140;
-    public static int one_ring = 128;
-    public static int x = 181;
-    public static int y = 98;
+    public static int four_rings = 130;
+    public static int one_ring = 127;
+
+    public static int x = 193;
+    public static int y = 215;
+
     OpenCvCamera webcam;
     RingDeterminationPipeline pipeline;
     RingPositions ringPos;
@@ -51,6 +56,7 @@ public class AutoBase extends LinearOpMode
     DcMotor backleft;
     DcMotor backright;
     Arm arm;
+    ArmGripper armGripper;
 
     // Chad
     Integer cpr = 537;
@@ -74,51 +80,53 @@ public class AutoBase extends LinearOpMode
     }
 
     @Config
-    public static class AutoConstants
-    {
+    public static class AutoConstants {
         public static double fast_speed = 0.6;
         public static double slow_speed = 0.4;
-        public static double turn_speed = 0.3;
+        public static double turn_speed = 0.35;
     }
 
-    @Config
+    //@Config
     public static class ZeroAutoConstants
     {
 
-        public static double a_forward_to_zone = 59.2;
-        public static double b_turn_to_zone = -90;
-        public static double c_drive_to_zone = 19.8;
-        public static double d_turn_face_second_wobble = -90;
-        public static double e_drive_to_second_wobble = 39.8;
+        public static double a_first_strafe = 5;
+        public static double a_forward_to_zone = 67;
+        public static double b_strafe_to_zone = -25;
+        public static double c_strafe_to_wobble2 = -10;
+        public static double d_turn_face_second_wobble = 180;
+        public static double e_drive_to_second_wobble = -32;
         public static double f_turn_face_zone_2 = 165;
         public static double g_drive_to_zone_2 = 34.4;
         public static double h_strafe_park = 51.6;
 
-        public static double z_wobble_backup = -3;
+        public static double z_wobble_backup = -3.5;
+
+        public static double drop_arm_power = -0.5;
+        public static int drop_arm_time = 650;
+
+        public static double raise_arm_power = -0.2;
+        public static int raise_arm_time = 200;
     }
 
-    //@Config
+    @Config
     public static class OneAutoConstants
     {
-        public static double a_forward_to_zone = 72;
-        public static double b_strafe_from_zone = -27.2;
-        public static double c_forward_to_wobble_2 = 50.2;
-        public static double d_turn_to_face_zone_2 = -175;
-        public static double e_forward_to_zone_2 = 51.2;
+        public static double a_first_strafe = 7;
+        public static double a_forward_to_zone = 89;
+        public static double b_strafe_to_zone = -41;
+        public static double c_park = -18;
     }
 
-    //@Config
+    @Config
     public static class FourAutoConstants
     {
-        public static double a_forward_to_zone = 81.4;
-        public static double b_strafe_to_zone = -32.0;
-        public static double c_tap_up_to_zone = 9.8;
-        public static double d_turn_to_face_wobbler = 175;
-        public static double e_forward_to_wobbler_2 = 69;
-        public static double f_turn_to_face_zone_2 = -175;
-        public static double g_drive_up_to_zone_2 = 67.2;
-        public static double h_back_to_park = -23.8;
-    }
+        public static double a_first_strafe = 5;
+        public static double a_forward_to_zone = 115;
+        public static double b_strafe_to_zone = -27;
+        public static double c_park = -45;
+
+        public static double z_wobble_backup = -3.5; public static double drop_arm_power = -0.5; public static int drop_arm_time = 650; }
 
 
     @Override
@@ -134,17 +142,18 @@ public class AutoBase extends LinearOpMode
         backright.setDirection(DcMotorSimple.Direction.REVERSE);
 
         arm = new Arm(Arm.armRunMode.AUTONOMOUS, this, hardwareMap, telemetry);
+        armGripper = new ArmGripper(this, hardwareMap, telemetry);
 
         // Setting up CV
-//        initCV();
+        initCV();
 
         waitForStart();
 
         if (isStopRequested()) return;
 
-        // MANUAL OVERRIDE FOR NOW
-//         detectRings();
-        ringPos = RingPositions.ZERO;
+        detectRings();
+
+        telemetry.addLine("Ready and waiting.");
 
         /*
 
@@ -157,133 +166,112 @@ public class AutoBase extends LinearOpMode
 
             case ZERO: // A
 
+                strafeToPosition(ZeroAutoConstants.a_first_strafe, AutoConstants.slow_speed);
+
+                sleep(200);
+
                 // Drive forwards to zone
                 moveToPosition(ZeroAutoConstants.a_forward_to_zone, AutoConstants.fast_speed);
 
-                // Turn to face zone
-                turnWithGyro(ZeroAutoConstants.b_turn_to_zone, AutoConstants.turn_speed);
+                sleep(500);
 
-                sleep(300);
-
-                // Drive up to zone
-                moveToPosition(ZeroAutoConstants.c_drive_to_zone, AutoConstants.slow_speed);
+                // Strafe to face zone
+                strafeToPosition(ZeroAutoConstants.b_strafe_to_zone, AutoConstants.slow_speed - 0.2);
 
                 sleep(300);
 
                 // DROP WOBBLE
-                // arm.autoDrive(100, 0.8);
+                arm.autoDrive(ZeroAutoConstants.drop_arm_time, ZeroAutoConstants.drop_arm_power);
+                sleep(200);
+                armGripper.open();
 
-                // Back up from wobble a bit
-                moveToPosition(ZeroAutoConstants.z_wobble_backup, AutoConstants.fast_speed);
+                sleep(200);
 
-                // Bring wobble back down to ready position
-                // arm.autoDrive(100, -0.8)
-
-                // Turn to face second wobble
-                turnWithGyro(ZeroAutoConstants.d_turn_face_second_wobble, AutoConstants.turn_speed);
-
-                // Drive up to second wobble
-                moveToPosition(ZeroAutoConstants.e_drive_to_second_wobble, AutoConstants.fast_speed);
-
-
-                // GRAB SECOND WOBBLE
-                // arm.autoDrive(100, 0.8)
-
-
-                // Turn back to face zone
-                turnWithGyro(ZeroAutoConstants.f_turn_face_zone_2, AutoConstants.turn_speed);
-
-                moveToPosition(ZeroAutoConstants.g_drive_to_zone_2, AutoConstants.fast_speed); // Drive up to zone
-
-
-                // DROP SECOND WOBBLE
-                // arm.autoDrive(100, 0.8)
+                strafeToPosition(1.2, 0.3);
+                moveToPosition(-2.2, AutoConstants.slow_speed - 0.1);
 
                 sleep(300);
 
-                // Back up a bit
-                moveToPosition(ZeroAutoConstants.z_wobble_backup, AutoConstants.fast_speed);
+                // Back up from wobble a bit
+                moveToPosition(ZeroAutoConstants.z_wobble_backup, AutoConstants.slow_speed - 0.1);
 
-                strafeToPosition(ZeroAutoConstants.h_strafe_park, AutoConstants.slow_speed); // Strafe onto line to park
+                sleep(100);
+
+                moveToPosition(-4, AutoConstants.slow_speed - 0.1);
 
                 break;
 
             case ONE: // B
 
-                // Drive forward to zone
+                strafeToPosition(OneAutoConstants.a_first_strafe, AutoConstants.slow_speed - 0.1);
+
+                sleep(200);
+
+                // Drive forwards to zone
                 moveToPosition(OneAutoConstants.a_forward_to_zone, AutoConstants.fast_speed);
 
-                sleep(300);
+                sleep(500);
 
-                // Drop wobble
-                //arm.autoDrive(100, -0.8);
+                // DROP WOBBLE
+                arm.autoDrive(ZeroAutoConstants.drop_arm_time, ZeroAutoConstants.drop_arm_power);
+                sleep(200);
+                armGripper.open();
 
-                // POSSIBLE - add tiny backup
+                sleep(200);
 
-
-                // Strafe away from zone to line up with second wobble
-                strafeToPosition(OneAutoConstants.b_strafe_from_zone, AutoConstants.slow_speed);
-
-                sleep(300);
-
-                // Grab second wobbler
-                // arm.autoDrive(100, 0.8);
+                strafeToPosition(1.2, 0.3);
+                moveToPosition(-2.2, AutoConstants.slow_speed - 0.1);
 
                 sleep(300);
 
-                turnWithGyro(180, AutoConstants.turn_speed);
+                // Back up from wobble a bit
+                moveToPosition(ZeroAutoConstants.z_wobble_backup, AutoConstants.slow_speed - 0.1);
 
-                moveToPosition(OneAutoConstants.c_forward_to_wobble_2, AutoConstants.slow_speed);
+                sleep(100);
 
-                // Flip back around to face zone
-                turnWithGyro(OneAutoConstants.d_turn_to_face_zone_2, AutoConstants.turn_speed);
-
-                moveToPosition(OneAutoConstants.e_forward_to_zone_2, AutoConstants.fast_speed);
-
-                // Drop wobble goal
-                // arm.autoDrive(100, 0.8);
+                moveToPosition(OneAutoConstants.c_park, AutoConstants.fast_speed);
 
                 break;
 
           case FOUR: // C
 
+              strafeToPosition(FourAutoConstants.a_first_strafe, AutoConstants.slow_speed);
+
+              sleep(200);
+
+              // Drive forwards to zone
               moveToPosition(FourAutoConstants.a_forward_to_zone, AutoConstants.fast_speed);
 
-              strafeToPosition(FourAutoConstants.b_strafe_to_zone, AutoConstants.slow_speed);
+              sleep(500);
 
-              moveToPosition(FourAutoConstants.c_tap_up_to_zone, AutoConstants.slow_speed);
-
-
-              sleep(300);
-
-              // Drop wobbler
-              //arm.autoDrive(100, 0.8);
+              // Strafe to face zone
+              strafeToPosition(FourAutoConstants.b_strafe_to_zone, AutoConstants.slow_speed - 0.2);
 
               sleep(300);
 
-              // Turn to face wobbler 2
-              turnWithGyro(FourAutoConstants.d_turn_to_face_wobbler, AutoConstants.turn_speed);
+              // DROP WOBBLE
+              arm.autoDrive(ZeroAutoConstants.drop_arm_time, ZeroAutoConstants.drop_arm_power);
+              sleep(200);
+              armGripper.open();
 
-              // Drive up to wobbler 2
-              moveToPosition(FourAutoConstants.e_forward_to_wobbler_2, AutoConstants.slow_speed);
+              sleep(200);
+
+              strafeToPosition(1.2, 0.3);
+              moveToPosition(-2.2, AutoConstants.slow_speed - 0.1);
 
               sleep(300);
-              // Grab wobbler 2
-              // arm.autoDrive(100, -0.8);
-              sleep(300);
 
-              // Turn back to face zone
-              turnWithGyro(FourAutoConstants.f_turn_to_face_zone_2, AutoConstants.turn_speed);
+              // Back up from wobble a bit
+              moveToPosition(ZeroAutoConstants.z_wobble_backup, AutoConstants.slow_speed - 0.1);
 
-              moveToPosition(FourAutoConstants.g_drive_up_to_zone_2, AutoConstants.fast_speed);
+              sleep(100);
 
-              moveToPosition(FourAutoConstants.h_back_to_park, AutoConstants.fast_speed);
+              moveToPosition(FourAutoConstants.c_park, AutoConstants.fast_speed);
 
               break;
 
         } // END SWITCH
     } // END OP MODE
-
 
 
 
@@ -319,7 +307,7 @@ public class AutoBase extends LinearOpMode
          */
         static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(x, y);
 
-        static final int REGION_WIDTH = 35;
+        static final int REGION_WIDTH = 40;
         static final int REGION_HEIGHT = 25;
 
         final int FOUR_RING_THRESHOLD = four_rings;
@@ -416,12 +404,13 @@ public class AutoBase extends LinearOpMode
             }
         });
 
-        // TODO Untested, maybe remove
         FtcDashboard.getInstance().startCameraStream(webcam, 15);
     }
 
     // Function to detect the rings
     private void detectRings() {
+
+        sleep(2000);
 
         RingDeterminationPipeline.RingCount ringPositionDetected = pipeline.position;
 
@@ -434,13 +423,14 @@ public class AutoBase extends LinearOpMode
             ringPos = RingPositions.ZERO;
         }
         else // If there's one ring. I figure it's easier to distinguish between four and none,
-             // so we might as well go four the two if it doesn't see four or none.
+        // so we might as well go four the two if it doesn't see four or none.
         {
             ringPos = RingPositions.ONE;
         }
 
         telemetry.clearAll();
         telemetry.addData("Ring pos:", ringPos);
+        //telemetry.addData("tolerance", );
         telemetry.update();
 
         // TODO Untested, maybe remove

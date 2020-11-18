@@ -19,11 +19,11 @@ public class Arm{
     public DcMotor armMotor;
     public LinearOpMode l;
     public Telemetry realTelemetry;
-    public Servo armGripper;
 
     @Config
     public static class ArmConstants {
-        public static double arm_modifier = 0.8;
+        public static double arm_modifier = 0.1;
+        public static double arm_stall_power = 0.01;
     }
 
     public enum armRunMode {
@@ -38,11 +38,10 @@ public class Arm{
         realTelemetry = telemetry;
 
         armMotor = hardwareMap.dcMotor.get("armMotor");
-        armGripper = hardwareMap.servo.get("armGripperServo");
 
         if (runMode.equals(armRunMode.TELEOP)) {
             armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         }
 
@@ -55,7 +54,7 @@ public class Arm{
 
     }
 
-    public void autoDrive(int msecs, float power){
+    public void autoDrive(int msecs, double power){
         armMotor.setPower(power);
         l.sleep(msecs);
         armMotor.setPower(0);
@@ -63,7 +62,8 @@ public class Arm{
 
     public void teleOpControl(double input){
         armMotor.setPower(input * ArmConstants.arm_modifier);
-        //realTelemetry.addData("Arm Encoder Count:", armMotor.getCurrentPosition());
+        realTelemetry.addData("Arm power:", input * ArmConstants.arm_modifier);
+        realTelemetry.addData("Arm Encoder Count:", armMotor.getCurrentPosition());
     }
 
 

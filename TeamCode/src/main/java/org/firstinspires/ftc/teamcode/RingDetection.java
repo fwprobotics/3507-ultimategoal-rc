@@ -21,6 +21,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -41,11 +42,11 @@ import org.openftc.easyopencv.OpenCvPipeline;
 public class RingDetection extends LinearOpMode
 {
 
-    public static int four_rings = 140;
-    public static int one_ring = 128;
+    public static int four_rings = 135;
+    public static int one_ring = 127;
 
-    public static int x = 181;
-    public static int y = 98;
+    public static int x = 193;
+    public static int y = 215;
 
 
     OpenCvCamera webcam;
@@ -67,6 +68,9 @@ public class RingDetection extends LinearOpMode
                 webcam.startStreaming(320,240);
             }
         });
+        FtcDashboard.getInstance().startCameraStream(webcam, 15);
+
+
 
         waitForStart();
 
@@ -104,7 +108,7 @@ public class RingDetection extends LinearOpMode
          */
         static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(x, y);
 
-        static final int REGION_WIDTH = 35;
+        static final int REGION_WIDTH = 40;
         static final int REGION_HEIGHT = 25;
 
         final int FOUR_RING_THRESHOLD = four_rings;

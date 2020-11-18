@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -22,14 +23,15 @@ public class ArmGripper {
         OPEN
     }
 
-    private servoPositions servo_pos = servoPositions.CLOSED;
+    private servoPositions servo_pos;
 
     private boolean ButtonDown;
 
+    @Config
     public static class armGripperConstants {
 
         public static double open_pos = 1;
-        public static double closed_pos = 0;
+        public static double closed_pos = 0.12;
     }
 
     public ArmGripper(LinearOpMode Input, HardwareMap hardwareMap, Telemetry telemetry){
@@ -40,6 +42,8 @@ public class ArmGripper {
         armGripper = hardwareMap.servo.get("armGripperServo");
 
         armGripper.setDirection(Servo.Direction.REVERSE);
+        armGripper.setPosition(armGripperConstants.closed_pos);
+        servo_pos = servoPositions.CLOSED;
 
     }
 
@@ -64,6 +68,7 @@ public class ArmGripper {
         if (!inputButton) {
             ButtonDown = false;
         }
+        realTelemetry.addData("Servo pos:", armGripper.getPosition());
     }
 
     public void open(){
